@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 import z from "zod";
 import { createTenableClient } from "@/lib/tenable";
 
-function getTenableClient() {
-	const h = headers();
+async function getTenableClient() {
+	const h = await headers();
 	const accessKey = h.get("x-sc-access-key");
 	const secretKey = h.get("x-sc-secret-key");
 	if (!accessKey || !secretKey)
@@ -30,7 +30,7 @@ const handler = createMcpHandler(
 				},
 			},
 			async ({ type }) => {
-				const result = await getTenableClient().listQueries(type);
+				const result = await (await getTenableClient()).listQueries(type);
 				return {
 					content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 				};
@@ -47,7 +47,7 @@ const handler = createMcpHandler(
 				},
 			},
 			async ({ id }) => {
-				const result = await getTenableClient().getQuery(id);
+				const result = await (await getTenableClient()).getQuery(id);
 				return {
 					content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 				};
@@ -62,7 +62,7 @@ const handler = createMcpHandler(
 				inputSchema: {},
 			},
 			async () => {
-				const tags = await getTenableClient().listQueryTags();
+				const tags = await (await getTenableClient()).listQueryTags();
 				return {
 					content: [{ type: "text", text: JSON.stringify(tags, null, 2) }],
 				};
@@ -159,7 +159,7 @@ const handler = createMcpHandler(
 								...(sortField && { sortField, sortDir }),
 						  };
 
-				const result = await getTenableClient().analysis(request);
+				const result = await (await getTenableClient()).analysis(request);
 				return {
 					content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 				};
@@ -227,7 +227,7 @@ const handler = createMcpHandler(
 				};
 
 				const allResults: unknown[] = [];
-				for await (const page of getTenableClient().analysisPaged(baseRequest, pageSize)) {
+				for await (const page of (await getTenableClient()).analysisPaged(baseRequest, pageSize)) {
 					allResults.push(...page);
 					if (allResults.length >= maxRecords) break;
 				}
@@ -272,7 +272,7 @@ const handler = createMcpHandler(
 				},
 			},
 			async ({ name, type, tool, filters, description, tags }) => {
-				const result = await getTenableClient().createQuery({
+				const result = await (await getTenableClient()).createQuery({
 					name, type, tool, filters, description, tags,
 				});
 				return {
