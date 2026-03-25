@@ -1,0 +1,9 @@
+.git
+.next
+node_modules
+npm-debug.log*
+.env*
+.DS_Store
+*.pem
+README.md
+docker-compose.yml
