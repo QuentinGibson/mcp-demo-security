@@ -5,13 +5,14 @@ import { createTenableClient } from "@/lib/tenable";
 
 async function getTenableClient() {
 	const h = await headers();
+	const baseUrl = h.get("x-sc-url");
 	const accessKey = h.get("x-sc-access-key");
 	const secretKey = h.get("x-sc-secret-key");
-	if (!accessKey || !secretKey)
+	if (!baseUrl || !accessKey || !secretKey)
 		throw new Error(
-			"Missing required headers: x-sc-access-key and x-sc-secret-key"
+			"Missing required headers: x-sc-url, x-sc-access-key, and x-sc-secret-key"
 		);
-	return createTenableClient(accessKey, secretKey);
+	return createTenableClient(baseUrl, accessKey, secretKey);
 }
 
 const handler = createMcpHandler(
