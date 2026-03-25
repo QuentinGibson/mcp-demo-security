@@ -1,32 +1,21 @@
 import { createMcpHandler } from "mcp-handler";
+import { headers } from "next/headers";
 import z from "zod";
-import assestThreatFromUrl from "../lib/assestThreatFromUrl";
-import { tenableClient } from "@/lib/tenable";
+import { createTenableClient } from "@/lib/tenable";
+
+function getTenableClient() {
+	const h = headers();
+	const accessKey = h.get("x-sc-access-key");
+	const secretKey = h.get("x-sc-secret-key");
+	if (!accessKey || !secretKey)
+		throw new Error(
+			"Missing required headers: x-sc-access-key and x-sc-secret-key"
+		);
+	return createTenableClient(accessKey, secretKey);
+}
 
 const handler = createMcpHandler(
 	(server) => {
-		server.registerTool(
-			"threat-detector",
-			{
-				title: "Threat Dectector",
-				description:
-					"Detect the threats present on a webpage and assets the threat level",
-				inputSchema: {
-					url: z.string(),
-				},
-			},
-			async ({ url }) => {
-				return {
-					content: [
-						{
-							type: "text",
-							text: `${await assestThreatFromUrl(url)}`,
-						},
-					],
-				};
-			},
-		);
-
 		server.registerTool(
 			"tenable_list_queries",
 			{
@@ -41,7 +30,7 @@ const handler = createMcpHandler(
 				},
 			},
 			async ({ type }) => {
-				const result = await tenableClient.listQueries(type);
+				const result = await getTenableClient().listQueries(type);
 				return {
 					content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 				};
@@ -58,7 +47,7 @@ const handler = createMcpHandler(
 				},
 			},
 			async ({ id }) => {
-				const result = await tenableClient.getQuery(id);
+				const result = await getTenableClient().getQuery(id);
 				return {
 					content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 				};
@@ -73,7 +62,7 @@ const handler = createMcpHandler(
 				inputSchema: {},
 			},
 			async () => {
-				const tags = await tenableClient.listQueryTags();
+				const tags = await getTenableClient().listQueryTags();
 				return {
 					content: [{ type: "text", text: JSON.stringify(tags, null, 2) }],
 				};
@@ -170,7 +159,7 @@ const handler = createMcpHandler(
 								...(sortField && { sortField, sortDir }),
 						  };
 
-				const result = await tenableClient.analysis(request);
+				const result = await getTenableClient().analysis(request);
 				return {
 					content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
 				};
@@ -238,7 +227,7 @@ const handler = createMcpHandler(
 				};
 
 				const allResults: unknown[] = [];
-				for await (const page of tenableClient.analysisPaged(baseRequest, pageSize)) {
+				for await (const page of getTenableClient().analysisPaged(baseRequest, pageSize)) {
 					allResults.push(...page);
 					if (allResults.length >= maxRecords) break;
 				}
@@ -283,7 +272,7 @@ const handler = createMcpHandler(
 				},
 			},
 			async ({ name, type, tool, filters, description, tags }) => {
-				const result = await tenableClient.createQuery({
+				const result = await getTenableClient().createQuery({
 					name, type, tool, filters, description, tags,
 				});
 				return {
