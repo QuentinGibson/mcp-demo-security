@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    image: quentmadeit/mcp-demo-security:latest
     environment:
       REDIS_URL: redis://redis:6379
     depends_on:
